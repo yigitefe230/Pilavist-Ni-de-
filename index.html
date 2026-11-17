@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pilavist Niğde - Masadan Sipariş Ver</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+body{background:#FFF8ED;color:#1A1A1A;padding:16px}
+.top{text-align:center;margin-bottom:14px}
+.top h1{font-size:32px;line-height:1}
+.top h1 span{font-size:13px;display:block;letter-spacing:3px;color:#B7791F;margin-top:4px}
+.top p{font-size:14px;color:#666;margin-top:8px}
+.card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 4px 18px rgba(0,0,0,.07);margin-bottom:14px;border:1px solid #F1E6D0}
+.card h2{font-size:16px;margin-bottom:12px}
+.tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.table-btn{padding:14px 0;border:2px solid #EDE0C8;border-radius:14px;background:#FFFBF2;font-weight:700;font-size:15px;cursor:pointer;transition:0.2s}
+.table-btn.active{background:#111;color:#fff;border-color:#111}
+.table-btn small{display:block;font-size:11px;opacity:.7}
+.menu-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F1E6D0;align-items:center}
+.menu-item:last-child{border-bottom:none}
+.menu-item img{width:62px;height:62px;object-fit:cover;border-radius:12px}
+.mi-info{flex:1}
+.mi-info b{font-size:15px;display:block}
+.mi-info span{font-size:12px;color:#777}
+.mi-price{font-weight:800;font-size:15px}
+.qty{display:flex;align-items:center;gap:8px;margin-top:8px}
+.qty button{width:30px;height:30px;border-radius:50%;border:1px solid #ddd;background:#fff;font-size:18px;cursor:pointer}
+.qty button.plus{background:#111;color:#fff}
+.qty b{min-width:18px;text-align:center}
+.sos-grid{display:flex;flex-wrap:wrap;gap:8px}
+.sos{padding:8px 12px;border-radius:999px;border:1px solid #EDE0C8;background:#FFFBF2;font-size:13px;cursor:pointer;transition:0.2s}
+.sos.active{background:#111;color:#fff}
+.note{width:100%;padding:12px;border-radius:12px;border:1px solid #EDE0C8;background:#FFFBF2;font-size:14px;outline:none}
+.bar{background:#fff;border:1px solid #eee;padding:16px;border-radius:18px;box-shadow:0 4px 18px rgba(0,0,0,.07);margin-top:14px}
+.bar-top{display:flex;justify-content:space-between;margin-bottom:12px}
+.bar-top b{font-size:18px}
+.order-btn{display:block;width:100%;padding:16px;border-radius:14px;background:#25D366;color:#fff;font-weight:800;font-size:17px;text-align:center;text-decoration:none;margin-bottom:10px}
+.order-btn.disabled{background:#ccc;pointer-events:none}
+.copy-btn{display:block;width:100%;padding:14px;border:2px solid #111;border-radius:14px;background:#fff;font-weight:800;font-size:15px;cursor:pointer}
+.hint{font-size:12px;color:#888;text-align:center;margin-top:8px}
+.order-box{display:none;background:#FFFBF2;border:1px dashed #E0C99A;border-radius:12px;padding:12px;font-size:13px;white-space:pre-wrap;margin-top:12px}
+.status-msg{display:none;background:#E8F5E9;color:#2E7D32;padding:10px;border-radius:10px;font-size:13px;font-weight:600;text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>PİLAVİST<span>NİĞDE • LEZZET HER ZAMAN TAZE</span></h1>
+  <p>Sıcak, Taze, Doyurucu. Masandan seç, WhatsApp'a gönder, masana gelsin.</p>
+</div>
+
+<div class="card">
+  <h2>1 • Masamı Seç</h2>
+  <div class="tables" id="tables"></div>
+</div>
+
+<div class="card">
+  <h2>2 • Ne Yesek?</h2>
+  <div id="menu"></div>
+</div>
+
+<div class="card">
+  <h2>3 • Sos Seç (istersen) - 20 çeşit</h2>
+  <div class="sos-grid" id="sos"></div>
+  <p style="font-size:12px;color:#888;margin-top:10px">20 çeşit sos: Hot Chili, Barbekü, Sweet Chili, Sarımsaklı, Acı Sos, Chipotle, Pesto, Çıra, Köri, Nane, Yoğurtlu, Ranch, Buffalo, Honey Mustard, Teriyaki, Soya, Acı Mayonez, Kekik, Limonlu, Trüf</p>
+</div>
+
+<div class="card">
+  <h2>4 • Notun var mı?</h2>
+  <input class="note" id="note" placeholder="Örn: Soğan olmasın, acılı olsun...">
+</div>
+
+<div class="bar">
+  <div class="bar-top"><span id="summary">Masa seç, ürün ekle</span><b id="total">0 TL</b></div>
+  <a class="order-btn disabled" id="orderBtn" href="#" target="_top">WhatsApp ile Siparişi Gönder 📲</a>
+  <button class="copy-btn" id="copyBtn" type="button">📋 Siparişi Kopyala</button>
+  <div class="status-msg" id="statusMsg"></div>
+  <div class="hint">WhatsApp açılmazsa: Kopyala'ya bas, WhatsApp'ı açıp 0552 857 28 94 numarasına yapıştır.</div>
+  <div class="order-box" id="orderBox"></div>
+</div>
+
+<script>
+var MENU = [
+  {id:1,name:"Pilav Üstü Nohut",desc:"Bol pilav + nohut, 350 gr",price:200,img:"https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80"},
+  {id:2,name:"Klasik Pilav Üstü Tavuk",desc:"Klasik, 350 gr pilav + 150 gr tavuk",price:250,img:"https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=200&q=80"},
+  {id:3,name:"Sporcu Pilav Üstü Tavuk",desc:"Bol tavuk, 350 gr pilav + 300 gr tavuk",price:400,img:"https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80"},
+  {id:4,name:"Pilav Üstü Soslu Tavuk",desc:"Soslu tavuk, 350 gr pilav + 150 gr tavuk",price:250,img:"https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=200&q=80"},
+  {id:5,name:"Soslu Tavuklu Makarna",desc:"150 gr makarna + 150 gr soslu tavuk",price:250,img:"https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=200&q=80"}
+];
+var SOS = ["Hot Chili","Barbekü","Sweet Chili","Sarımsaklı","Acı Sos","Chipotle","Pesto","Çıra","Köri","Nane","Yoğurtlu","Ranch","Buffalo","Honey Mustard","Teriyaki","Soya","Acı Mayonez","Kekik","Limonlu","Trüf"];
+var selectedTable = null, cart = {}, selectedSos = {};
+
+var tablesEl = document.getElementById('tables');
+for(var i=1; i<=8; i++){
+  (function(n){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'table-btn';
+    b.innerHTML = 'Masa '+n+'<small>İçerde</small>';
+    b.onclick = function(){
+      selectedTable = n;
+      var all = document.querySelectorAll('.table-btn');
+      for(var k=0; k<all.length; k++) all[k].classList.remove('active');
+      b.classList.add('active');
+      update();
+    };
+    tablesEl.appendChild(b);
+  })(i);
+}
+
+var menuEl = document.getElementById('menu');
+MENU.forEach(function(m){
+  var div = document.createElement('div');
+  div.className = 'menu-item';
+  div.innerHTML = '<img src="'+m.img+'" alt="'+m.name+'"><div class="mi-info"><b>'+m.name+'</b><span>'+m.desc+'</span><div class="qty"><button type="button" onclick="changeQty('+m.id+',-1)">−</button><b id="q-'+m.id+'">0</b><button type="button" class="plus" onclick="changeQty('+m.id+',1)">+</button></div></div><div class="mi-price">'+m.price+' TL</div>';
+  menuEl.appendChild(div);
+});
+
+var sosEl = document.getElementById('sos');
+SOS.forEach(function(s){
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'sos';
+  b.textContent = s;
+  b.onclick = function(){
+    if(selectedSos[s]){ delete selectedSos[s]; b.classList.remove('active'); }
+    else { selectedSos[s] = 1; b.classList.add('active'); }
+    update();
+  };
+  sosEl.appendChild(b);
+});
+
+function changeQty(id, d){
+  cart[id] = (cart[id] || 0) + d;
+  if(cart[id] <= 0) delete cart[id];
+  var el = document.getElementById('q-'+id);
+  if(el) el.textContent = cart[id] || 0;
+  update();
+}
+
+function buildText(){
+  var lines = [];
+  lines.push('Merhaba Pilavist Nigde! Masadan siparis veriyorum.');
+  lines.push('');
+  lines.push('MASA: ' + selectedTable);
+  lines.push('');
+  MENU.forEach(function(m){
+    if(cart[m.id]) lines.push('- ' + cart[m.id] + 'x ' + m.name + ' - ' + (cart[m.id]*m.price) + ' TL');
+  });
+  var sosList = Object.keys(selectedSos);
+  if(sosList.length){
+    lines.push('');
+    lines.push('Sos: ' + sosList.join(', '));
+  }
+  var note = document.getElementById('note').value.trim();
+  if(note){
+    lines.push('');
+    lines.push('Not: ' + note);
+  }
+  var total = 0;
+  MENU.forEach(function(m){ if(cart[m.id]) total += cart[m.id]*m.price; });
+  lines.push('');
+  lines.push('TOPLAM: ' + total + ' TL');
+  return lines.join('\n');
+}
+
+function update(){
+  var total = 0, count = 0;
+  MENU.forEach(function(m){
+    if(cart[m.id]){ total += cart[m.id]*m.price; count += cart[m.id]; }
+  });
+  document.getElementById('total').textContent = total + ' TL';
+  document.getElementById('summary').textContent = selectedTable ? 'Masa '+selectedTable+' • '+count+' ürün' : count+' ürün';
+  var btn = document.getElementById('orderBtn');
+  if(selectedTable && count > 0){
+    btn.href = 'https://api.whatsapp.com/send?phone=905528572894&text=' + encodeURIComponent(buildText());
+    btn.classList.remove('disabled');
+  } else {
+    btn.href = '#';
+    btn.classList.add('disabled');
+  }
+}
+
+function showStatus(msg){
+  var el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+document.getElementById('note').addEventListener('input', update);
+
+document.getElementById('copyBtn').onclick = function(){
+  if(!selectedTable){
+    showStatus('⚠️ Lütfen önce masa numaranızı seçin.');
+    return;
+  }
+  var txt = buildText();
+  var box = document.getElementById('orderBox');
+  box.style.display = 'block';
+  box.textContent = txt;
+
+  var ta = document.createElement('textarea');
+  ta.value = txt;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showStatus('✅ Sipariş kopyalandı! WhatsApp uygulamasını açıp 0552 857 28 94 numarasına yapıştırın.');
+  } catch (err) {
+    showStatus('ℹ️ Aşağıdaki metni basılı tutup kopyalayabilirsiniz.');
+  }
+  document.body.removeChild(ta);
+};
+
+update();
+</script>
+</body>
+</html>
